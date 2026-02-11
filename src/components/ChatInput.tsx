@@ -33,7 +33,10 @@ const ChatInput = ({ onSend, disabled, placeholder }: ChatInputProps) => {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-4">
-      <div className="flex items-end gap-2 rounded-2xl border border-input bg-secondary px-4 py-3">
+      <div
+        className="flex items-end gap-2 rounded-2xl border border-input bg-secondary px-4 py-3 cursor-text"
+        onClick={() => textareaRef.current?.focus()}
+      >
         <textarea
           ref={textareaRef}
           value={value}
