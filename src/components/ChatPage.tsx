@@ -1,41 +1,73 @@
 import { useState, useRef, useEffect } from "react";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Sparkles } from "lucide-react";
 import { agents, type Agent } from "@/lib/agents";
+import { supabase } from "@/integrations/supabase/client";
 import AgentSelector from "@/components/AgentSelector";
 import ChatMessage, { type Message } from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 
-interface ChatPageProps {}
-
-const ChatPage = (_props: ChatPageProps) => {
+const ChatPage = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents[0]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
+  const [thinkingText, setThinkingText] = useState("Thinking");
   const [dark, setDark] = useState(() => {
     if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark") ||
-        window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return (
+        document.documentElement.classList.contains("dark") ||
+        window.matchMedia("(prefers-color-scheme: dark)").matches
+      );
     }
     return false;
   });
   const bottomRef = useRef<HTMLDivElement>(null);
+  const thinkingInterval = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    if (dark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
+  // Animate thinking text
+  useEffect(() => {
+    if (loading) {
+      let dots = 0;
+      thinkingInterval.current = setInterval(() => {
+        dots = (dots + 1) % 4;
+        setThinkingText("Thinking" + ".".repeat(dots));
+      }, 500);
+    } else {
+      if (thinkingInterval.current) clearInterval(thinkingInterval.current);
+      setThinkingText("Thinking");
+    }
+    return () => {
+      if (thinkingInterval.current) clearInterval(thinkingInterval.current);
+    };
+  }, [loading]);
+
   const handleAgentChange = (agent: Agent) => {
     setSelectedAgent(agent);
     setMessages([]);
+  };
+
+  const extractReply = (data: unknown): string => {
+    if (typeof data === "string") return data;
+    if (Array.isArray(data) && data.length > 0) return extractReply(data[0]);
+    if (data && typeof data === "object") {
+      const obj = data as Record<string, unknown>;
+      for (const key of ["output", "response", "message", "text", "answer", "result", "reply"]) {
+        if (obj[key] !== undefined) {
+          return typeof obj[key] === "string" ? (obj[key] as string) : JSON.stringify(obj[key]);
+        }
+      }
+      // Fallback: stringify nicely
+      return JSON.stringify(data, null, 2);
+    }
+    return String(data);
   };
 
   const handleSend = async (text: string) => {
@@ -44,40 +76,28 @@ const ChatPage = (_props: ChatPageProps) => {
     setLoading(true);
 
     try {
-      const res = await fetch(selectedAgent.webhook, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+      const { data, error } = await supabase.functions.invoke("webhook-proxy", {
+        body: { message: text, webhookUrl: selectedAgent.webhook },
       });
 
       let reply = "Sorry, I couldn't get a response. Please try again.";
 
-      if (res.ok) {
-        const data = await res.json();
-        // Try to extract text from common response formats
-        if (typeof data === "string") {
-          reply = data;
-        } else if (data.output) {
-          reply = data.output;
-        } else if (data.response) {
-          reply = data.response;
-        } else if (data.message) {
-          reply = data.message;
-        } else if (data.text) {
-          reply = data.text;
-        } else if (data.answer) {
-          reply = data.answer;
-        } else if (data.result) {
-          reply = typeof data.result === "string" ? data.result : JSON.stringify(data.result);
-        } else {
-          // Fallback: stringify but present nicely
-          reply = JSON.stringify(data, null, 2);
-        }
+      if (error) {
+        console.error("Edge function error:", error);
+      } else if (data?.data !== undefined) {
+        reply = extractReply(data.data);
+      } else if (data?.error) {
+        reply = `Error: ${data.error}`;
       }
 
-      const agentMsg: Message = { id: (Date.now() + 1).toString(), role: "agent", content: reply };
+      const agentMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "agent",
+        content: reply,
+      };
       setMessages((prev) => [...prev, agentMsg]);
-    } catch {
+    } catch (err) {
+      console.error("Request failed:", err);
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "agent",
@@ -105,12 +125,14 @@ const ChatPage = (_props: ChatPageProps) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 && !loading && (
-          <div className="flex h-full flex-col items-center justify-center gap-3 px-4">
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-4 animate-fade-in">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-secondary">
-              <span className="text-lg">🤖</span>
+              <Sparkles className="h-5 w-5 text-muted-foreground" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">{selectedAgent.name}</h2>
-            <p className="text-sm text-muted-foreground">{selectedAgent.description} · {selectedAgent.domain}</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedAgent.description} · {selectedAgent.domain}
+            </p>
             <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
               Send a message to start a conversation with this agent.
             </p>
@@ -122,14 +144,14 @@ const ChatPage = (_props: ChatPageProps) => {
         ))}
 
         {loading && (
-          <div className="py-4">
+          <div className="animate-fade-in py-4">
             <div className="mx-auto max-w-2xl px-4">
               <div className="flex gap-4">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
-                  <span className="text-sm">🤖</span>
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">{selectedAgent.name}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{thinkingText}</p>
                   <TypingIndicator />
                 </div>
               </div>
