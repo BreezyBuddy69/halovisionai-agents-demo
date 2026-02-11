@@ -9,7 +9,15 @@ import TypingIndicator from "@/components/TypingIndicator";
 
 const ChatPage = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent>(agents[0]);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [chatHistories, setChatHistories] = useState<Record<string, Message[]>>({});
+  const messages = chatHistories[selectedAgent.id] || [];
+  const setMessages = (updater: Message[] | ((prev: Message[]) => Message[])) => {
+    setChatHistories((prev) => {
+      const current = prev[selectedAgent.id] || [];
+      const next = typeof updater === "function" ? updater(current) : updater;
+      return { ...prev, [selectedAgent.id]: next };
+    });
+  };
   const [loading, setLoading] = useState(false);
   const [thinkingText, setThinkingText] = useState("Thinking");
   const [dark, setDark] = useState(() => {
@@ -51,7 +59,6 @@ const ChatPage = () => {
 
   const handleAgentChange = (agent: Agent) => {
     setSelectedAgent(agent);
-    setMessages([]);
   };
 
   const extractReply = (data: unknown): string => {
