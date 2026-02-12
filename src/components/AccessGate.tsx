@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Lock } from "lucide-react";
 
 interface AccessCode {
@@ -6,8 +6,9 @@ interface AccessCode {
   allowedAgents: string[] | "all";
 }
 
-const ACCESS_CODES: AccessCode[] = [
+export const ACCESS_CODES: AccessCode[] = [
   { code: "jay112233", allowedAgents: "all" },
+  { code: "halo112233", allowedAgents: ["halovision"] },
   { code: "chiro112233", allowedAgents: ["chiroli"] },
   { code: "german112233", allowedAgents: ["simplygerman"] },
   { code: "safe3d112233", allowedAgents: ["safe3d"] },
@@ -21,6 +22,12 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
   const [code, setCode] = useState("");
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
+
+  // Force dark mode on access gate
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    return () => {};
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,8 +49,8 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
         style={shake ? { animation: "shake 0.4s ease-in-out" } : {}}
       >
         <div className="flex flex-col items-center gap-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
-            <Lock className="h-6 w-6 text-muted-foreground" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-secondary">
+            <Lock className="h-6 w-6 text-foreground" />
           </div>
           <div className="text-center">
             <h1 className="text-xl font-semibold text-foreground">Enter access code</h1>
@@ -55,7 +62,7 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Access code"
-              className="w-full rounded-xl border border-input bg-secondary px-4 py-3 text-center text-lg tracking-[0.3em] text-foreground placeholder:text-muted-foreground placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-center text-lg tracking-[0.3em] text-foreground placeholder:text-muted-foreground placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring"
               autoFocus
             />
             {error && (
