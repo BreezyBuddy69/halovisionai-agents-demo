@@ -11,16 +11,15 @@ serve(async (req) => {
   }
 
   try {
-    const { message, webhookUrl } = await req.json();
+    const { messages, webhookUrl } = await req.json();
 
-    if (!message || !webhookUrl) {
-      return new Response(JSON.stringify({ error: "Missing message or webhookUrl" }), {
+    if (!messages || !webhookUrl) {
+      return new Response(JSON.stringify({ error: "Missing messages or webhookUrl" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Allowlist of valid webhook URLs
     const allowedPrefixes = [
       "https://n8n.halo-vision.com/webhook/",
     ];
@@ -35,7 +34,7 @@ serve(async (req) => {
     const webhookRes = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ messages }),
     });
 
     const contentType = webhookRes.headers.get("content-type") || "";

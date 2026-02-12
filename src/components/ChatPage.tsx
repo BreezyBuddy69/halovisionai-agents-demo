@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Sun, Moon, Sparkles } from "lucide-react";
 import { agents, type Agent } from "@/lib/agents";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,8 +7,17 @@ import ChatMessage, { type Message } from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
 import TypingIndicator from "@/components/TypingIndicator";
 
-const ChatPage = () => {
-  const [selectedAgent, setSelectedAgent] = useState<Agent>(agents[0]);
+interface ChatPageProps {
+  allowedAgents: string[] | "all";
+}
+
+const ChatPage = ({ allowedAgents }: ChatPageProps) => {
+  const availableAgents = useMemo(
+    () => (allowedAgents === "all" ? agents : agents.filter((a) => allowedAgents.includes(a.id))),
+    [allowedAgents]
+  );
+
+  const [selectedAgent, setSelectedAgent] = useState<Agent>(availableAgents[0]);
   const [chatHistories, setChatHistories] = useState<Record<string, Message[]>>({});
   const messages = chatHistories[selectedAgent.id] || [];
   const setMessages = (updater: Message[] | ((prev: Message[]) => Message[])) => {
@@ -40,7 +49,6 @@ const ChatPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Animate thinking text
   useEffect(() => {
     if (loading) {
       let dots = 0;
@@ -71,7 +79,6 @@ const ChatPage = () => {
           return typeof obj[key] === "string" ? (obj[key] as string) : JSON.stringify(obj[key]);
         }
       }
-      // Fallback: stringify nicely
       return JSON.stringify(data, null, 2);
     }
     return String(data);
@@ -79,12 +86,19 @@ const ChatPage = () => {
 
   const handleSend = async (text: string) => {
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setLoading(true);
+
+    // Build last 10 messages array for webhook
+    const recentMessages = updatedMessages.slice(-10).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
 
     try {
       const { data, error } = await supabase.functions.invoke("webhook-proxy", {
-        body: { message: text, webhookUrl: selectedAgent.webhook },
+        body: { messages: recentMessages, webhookUrl: selectedAgent.webhook },
       });
 
       let reply = "Sorry, I couldn't get a response. Please try again.";
@@ -118,9 +132,12 @@ const ChatPage = () => {
 
   return (
     <div className="flex h-screen flex-col bg-background">
-      {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-4 py-3">
-        <AgentSelector selected={selectedAgent} onSelect={handleAgentChange} />
+        <AgentSelector
+          selected={selectedAgent}
+          onSelect={handleAgentChange}
+          agents={availableAgents}
+        />
         <button
           onClick={() => setDark(!dark)}
           className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
@@ -129,7 +146,6 @@ const ChatPage = () => {
         </button>
       </header>
 
-      {/* Messages */}
       <div className="flex-1 overflow-y-auto">
         {messages.length === 0 && !loading && (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-4 animate-fade-in">
@@ -169,7 +185,6 @@ const ChatPage = () => {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
       <ChatInput
         onSend={handleSend}
         disabled={loading}
