@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
 
-const ACCESS_CODE = "69696969";
+interface AccessCode {
+  code: string;
+  allowedAgents: string[] | "all";
+}
+
+const ACCESS_CODES: AccessCode[] = [
+  { code: "jay112233", allowedAgents: "all" },
+  { code: "chiro112233", allowedAgents: ["chiroli"] },
+  { code: "german112233", allowedAgents: ["simplygerman"] },
+  { code: "safe3d112233", allowedAgents: ["safe3d"] },
+];
 
 interface AccessGateProps {
-  onSuccess: () => void;
+  onSuccess: (allowedAgents: string[] | "all") => void;
 }
 
 const AccessGate = ({ onSuccess }: AccessGateProps) => {
@@ -14,8 +24,9 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (code === ACCESS_CODE) {
-      onSuccess();
+    const match = ACCESS_CODES.find((ac) => ac.code === code);
+    if (match) {
+      onSuccess(match.allowedAgents);
     } else {
       setError(true);
       setShake(true);

@@ -1,13 +1,14 @@
-import { agents, type Agent } from "@/lib/agents";
+import { type Agent } from "@/lib/agents";
 import { Bot, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface AgentSelectorProps {
   selected: Agent;
   onSelect: (agent: Agent) => void;
+  agents: Agent[];
 }
 
-const AgentSelector = ({ selected, onSelect }: AgentSelectorProps) => {
+const AgentSelector = ({ selected, onSelect, agents }: AgentSelectorProps) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
