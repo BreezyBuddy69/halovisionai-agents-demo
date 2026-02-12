@@ -22,6 +22,7 @@ serve(async (req) => {
 
     const allowedPrefixes = [
       "https://n8n.halo-vision.com/webhook/",
+      "https://n8n.halo-vision.com/webhook-test/",
     ];
     const isAllowed = allowedPrefixes.some((p) => webhookUrl.startsWith(p));
     if (!isAllowed) {

@@ -3,6 +3,7 @@ export interface Agent {
   name: string;
   description: string;
   webhook: string;
+  testWebhook: string;
   domain: string;
 }
 
@@ -12,6 +13,7 @@ export const agents: Agent[] = [
     name: "Halo Vision AI",
     description: "Custom AI agent solutions",
     webhook: "https://n8n.halo-vision.com/webhook/halovisionchatbot99",
+    testWebhook: "https://n8n.halo-vision.com/webhook-test/halovisionchatbot99",
     domain: "halovisionai.cloud",
   },
   {
@@ -19,6 +21,7 @@ export const agents: Agent[] = [
     name: "Chiro.li",
     description: "Chiropractor assistant",
     webhook: "https://n8n.halo-vision.com/webhook/chiroli-86767",
+    testWebhook: "https://n8n.halo-vision.com/webhook-test/chiroli-86767",
     domain: "chiro.li",
   },
   {
@@ -26,6 +29,7 @@ export const agents: Agent[] = [
     name: "Safe-3D",
     description: "Messtechniker assistant",
     webhook: "https://n8n.halo-vision.com/webhook/01f863a3-331a-495d-bdc1-4972c1657f5d",
+    testWebhook: "https://n8n.halo-vision.com/webhook-test/01f863a3-331a-495d-bdc1-4972c1657f5d",
     domain: "safe-3d.ch",
   },
   {
@@ -33,6 +37,7 @@ export const agents: Agent[] = [
     name: "Simply German",
     description: "German language lessons",
     webhook: "https://n8n.halo-vision.com/webhook/deutschbot",
+    testWebhook: "https://n8n.halo-vision.com/webhook-test/deutschbot",
     domain: "simply-german.bolt.host",
   },
 ];
