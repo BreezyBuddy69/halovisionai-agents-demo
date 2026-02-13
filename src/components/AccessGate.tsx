@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock } from "lucide-react";
+import { Lock, ArrowRight } from "lucide-react";
 
 interface AccessCode {
   code: string;
@@ -23,7 +23,6 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
 
-  // Force dark mode on access gate
   useEffect(() => {
     document.documentElement.classList.add("dark");
     return () => {};
@@ -43,26 +42,26 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
   };
 
   return (
-    <div className="dark flex min-h-screen items-center justify-center bg-[hsl(0,0%,8%)]">
+    <div className="dark flex min-h-screen items-center justify-center bg-background">
       <div
         className={`w-full max-w-sm px-6 transition-transform ${shake ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
         style={shake ? { animation: "shake 0.4s ease-in-out" } : {}}
       >
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[hsl(0,0%,25%)] bg-[hsl(0,0%,14%)]">
-            <Lock className="h-6 w-6 text-[hsl(0,0%,95%)]" />
+        <div className="flex flex-col items-center gap-8">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-secondary shadow-lg">
+            <Lock className="h-7 w-7 text-foreground" />
           </div>
-          <div className="text-center">
-            <h1 className="text-xl font-semibold text-foreground">Enter access code</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Enter the code to access the demo</p>
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Welcome back</h1>
+            <p className="text-sm text-muted-foreground">Enter your access code to continue</p>
           </div>
-          <form onSubmit={handleSubmit} className="w-full space-y-3">
+          <form onSubmit={handleSubmit} className="w-full space-y-4">
             <input
               type="password"
               value={code}
               onChange={(e) => setCode(e.target.value)}
               placeholder="Access code"
-              className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-center text-lg tracking-[0.3em] text-foreground placeholder:text-muted-foreground placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-2xl border border-border bg-secondary px-5 py-3.5 text-center text-base tracking-[0.25em] text-foreground placeholder:text-muted-foreground placeholder:tracking-normal focus:outline-none focus:ring-2 focus:ring-ring/50 transition-shadow"
               autoFocus
             />
             {error && (
@@ -72,9 +71,10 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
             )}
             <button
               type="submit"
-              className="w-full rounded-xl bg-primary px-4 py-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-foreground px-5 py-3.5 text-sm font-medium text-background transition-all hover:opacity-90 active:scale-[0.98]"
             >
-              Continue
+              <span>Continue</span>
+              <ArrowRight className="h-4 w-4" />
             </button>
           </form>
         </div>
