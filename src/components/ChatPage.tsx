@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Sun, Moon, Sparkles, Plus, MessageSquare, FlaskConical, Trash2 } from "lucide-react";
+import { Sun, Moon, Sparkles, Plus, PanelLeftClose, PanelLeft, FlaskConical, Trash2, MessageCircle } from "lucide-react";
 import { agents, type Agent } from "@/lib/agents";
 import { supabase } from "@/integrations/supabase/client";
 import AgentSelector from "@/components/AgentSelector";
@@ -27,9 +27,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   );
 
   const [selectedAgent, setSelectedAgent] = useState<Agent>(availableAgents[0]);
-  // Chat sessions per agent: agentId -> ChatSession[]
   const [agentSessions, setAgentSessions] = useState<Record<string, ChatSession[]>>({});
-  // Active session id per agent
   const [activeSessionIds, setActiveSessionIds] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [thinkingText, setThinkingText] = useState("Thinking");
@@ -49,7 +47,6 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const thinkingInterval = useRef<ReturnType<typeof setInterval>>();
 
-  // Get or create sessions for current agent
   const currentSessions = agentSessions[selectedAgent.id] || [];
   const activeSessionId = activeSessionIds[selectedAgent.id];
   const activeSession = currentSessions.find((s) => s.id === activeSessionId);
@@ -117,19 +114,16 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     };
   }, [loading]);
 
-  // Process queued message when loading finishes
   useEffect(() => {
     if (!loading && queuedMessage) {
       const msg = queuedMessage;
       setQueuedMessage(null);
-      // Small delay to let state settle
       setTimeout(() => handleSend(msg), 100);
     }
   }, [loading, queuedMessage]);
 
   const handleAgentChange = (agent: Agent) => {
     setSelectedAgent(agent);
-    setSidebarOpen(false);
   };
 
   const handleNewChat = () => {
@@ -144,7 +138,6 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
       [selectedAgent.id]: [...(prev[selectedAgent.id] || []), newSession],
     }));
     setActiveSessionIds((prev) => ({ ...prev, [selectedAgent.id]: newSession.id }));
-    setSidebarOpen(false);
   };
 
   const handleDeleteSession = (sessionId: string) => {
@@ -176,7 +169,6 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   };
 
   const handleSend = async (text: string) => {
-    // If loading, queue the message
     if (loading) {
       setQueuedMessage(text);
       return;
@@ -185,7 +177,6 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     const sessionId = ensureSession();
     const userMsg: Message = { id: Date.now().toString(), role: "user", content: text };
 
-    // Get current messages for the session
     const currentSession = (agentSessions[selectedAgent.id] || []).find((s) => s.id === sessionId);
     const currentMessages = currentSession?.messages || [];
     const updatedMessages = [...currentMessages, userMsg];
@@ -206,7 +197,6 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
       });
 
       if (testMode) {
-        // In test mode, don't expect a response — just confirm sent
         const agentMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: "agent",
@@ -248,44 +238,52 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div
-        className={`shrink-0 border-r border-border bg-card transition-all duration-200 overflow-hidden ${
-          sidebarOpen ? "w-64" : "w-0 border-r-0"
+        className={`shrink-0 border-r border-border bg-card transition-all duration-300 ease-in-out overflow-hidden ${
+          sidebarOpen ? "w-72" : "w-0 border-r-0"
         }`}
       >
-        <div className="flex h-full flex-col">
-        <div className="flex items-center justify-between border-b border-border px-4 py-[13px]">
-            <span className="text-sm font-semibold text-foreground">Chats</span>
+        <div className="flex h-full w-72 flex-col">
+          {/* Sidebar header */}
+          <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
+            <span className="text-sm font-semibold text-foreground tracking-tight">Chats</span>
             <button
               onClick={handleNewChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title="New chat"
             >
               <Plus className="h-4 w-4" />
             </button>
           </div>
+
+          {/* Session list */}
           <div className="flex-1 overflow-y-auto p-2">
             {currentSessions.length === 0 && (
-              <p className="px-2 py-4 text-center text-xs text-muted-foreground">No chats yet</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <MessageCircle className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-xs text-muted-foreground">No chats yet</p>
+              </div>
             )}
             {[...currentSessions].reverse().map((session) => (
               <div
                 key={session.id}
-                className={`group flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-accent ${
-                  activeSessionId === session.id ? "bg-accent text-foreground" : "text-muted-foreground"
+                className={`group flex items-center justify-between rounded-2xl px-3 py-2.5 text-sm cursor-pointer transition-all mb-0.5 ${
+                  activeSessionId === session.id
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                 }`}
                 onClick={() => {
                   setActiveSessionIds((prev) => ({ ...prev, [selectedAgent.id]: session.id }));
-                  setSidebarOpen(false);
                 }}
               >
-                <div className="flex items-center gap-2 truncate">
-                  <MessageSquare className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{session.title}</span>
+                <div className="flex items-center gap-2.5 truncate">
+                  <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate text-[13px]">{session.title}</span>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDeleteSession(session.id); }}
-                  className="hidden h-6 w-6 items-center justify-center rounded text-muted-foreground hover:text-destructive group-hover:flex"
+                  className="hidden h-7 w-7 items-center justify-center rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 group-hover:flex transition-colors"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
@@ -294,16 +292,16 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
       </div>
 
       {/* Main chat area */}
-
-      {/* Main chat area */}
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-4 py-[13px]">
+      <div className="flex flex-1 flex-col min-w-0">
+        {/* Header */}
+        <header className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
-              <MessageSquare className="h-4 w-4" />
+              {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
             </button>
             <AgentSelector
               selected={selectedAgent}
@@ -312,13 +310,13 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
               onUnlockRequest={() => setUnlockDialogOpen(true)}
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => setTestMode(!testMode)}
-              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-colors ${
+              className={`flex h-9 items-center gap-1.5 rounded-2xl border px-3.5 text-xs font-medium transition-all ${
                 testMode
-                  ? "border-destructive bg-destructive/10 text-destructive"
-                  : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               <FlaskConical className="h-3.5 w-3.5" />
@@ -326,24 +324,27 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
             </button>
             <button
               onClick={() => setDark(!dark)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
           </div>
         </header>
 
+        {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 && !loading && (
-            <div className="flex h-full flex-col items-center justify-center gap-3 px-4 animate-fade-in">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border bg-secondary">
-                <Sparkles className="h-5 w-5 text-foreground" />
+            <div className="flex h-full flex-col items-center justify-center gap-4 px-4 animate-fade-in">
+              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-secondary shadow-sm">
+                <Sparkles className="h-6 w-6 text-foreground" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">{selectedAgent.name}</h2>
-              <p className="text-sm text-muted-foreground">
-                {selectedAgent.description} · {selectedAgent.domain}
-              </p>
-              <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
+              <div className="text-center space-y-1">
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">{selectedAgent.name}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {selectedAgent.description} · {selectedAgent.domain}
+                </p>
+              </div>
+              <p className="mt-1 max-w-md text-center text-sm text-muted-foreground">
                 Send a message to start a conversation.
               </p>
             </div>
@@ -354,14 +355,14 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
           ))}
 
           {loading && (
-            <div className="animate-fade-in py-4">
+            <div className="animate-fade-in py-5">
               <div className="mx-auto max-w-2xl px-4">
                 <div className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-secondary shadow-sm">
                     <Sparkles className="h-4 w-4 text-foreground" />
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">{thinkingText}</p>
+                  <div className="pt-0.5">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{thinkingText}</p>
                     <TypingIndicator />
                   </div>
                 </div>
