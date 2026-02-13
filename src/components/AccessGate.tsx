@@ -43,14 +43,14 @@ const AccessGate = ({ onSuccess }: AccessGateProps) => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="dark flex min-h-screen items-center justify-center bg-[hsl(0,0%,8%)]">
       <div
         className={`w-full max-w-sm px-6 transition-transform ${shake ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
         style={shake ? { animation: "shake 0.4s ease-in-out" } : {}}
       >
         <div className="flex flex-col items-center gap-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border bg-secondary">
-            <Lock className="h-6 w-6 text-foreground" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[hsl(0,0%,25%)] bg-[hsl(0,0%,14%)]">
+            <Lock className="h-6 w-6 text-[hsl(0,0%,95%)]" />
           </div>
           <div className="text-center">
             <h1 className="text-xl font-semibold text-foreground">Enter access code</h1>
