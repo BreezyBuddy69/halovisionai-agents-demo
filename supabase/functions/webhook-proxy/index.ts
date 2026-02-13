@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, webhookUrl } = await req.json();
+    const { messages, webhookUrl, testMode } = await req.json();
 
     if (!messages || !webhookUrl) {
       return new Response(JSON.stringify({ error: "Missing messages or webhookUrl" }), {
@@ -28,6 +28,20 @@ serve(async (req) => {
     if (!isAllowed) {
       return new Response(JSON.stringify({ error: "Webhook URL not allowed" }), {
         status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (testMode) {
+      // Fire and forget — send but don't wait for response
+      fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      }).catch((e) => console.error("Test webhook fire-and-forget error:", e));
+
+      return new Response(JSON.stringify({ data: "Test message sent" }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

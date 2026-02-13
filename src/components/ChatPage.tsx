@@ -202,25 +202,35 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
 
     try {
       const { data, error } = await supabase.functions.invoke("webhook-proxy", {
-        body: { messages: recentMessages, webhookUrl },
+        body: { messages: recentMessages, webhookUrl, testMode },
       });
 
-      let reply = "Sorry, I couldn't get a response. Please try again.";
+      if (testMode) {
+        // In test mode, don't expect a response — just confirm sent
+        const agentMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "agent",
+          content: "✅ Test message sent to webhook.",
+        };
+        updateSessionMessages(sessionId, (prev) => [...prev, agentMsg]);
+      } else {
+        let reply = "Sorry, I couldn't get a response. Please try again.";
 
-      if (error) {
-        console.error("Edge function error:", error);
-      } else if (data?.data !== undefined) {
-        reply = extractReply(data.data);
-      } else if (data?.error) {
-        reply = `Error: ${data.error}`;
+        if (error) {
+          console.error("Edge function error:", error);
+        } else if (data?.data !== undefined) {
+          reply = extractReply(data.data);
+        } else if (data?.error) {
+          reply = `Error: ${data.error}`;
+        }
+
+        const agentMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "agent",
+          content: reply,
+        };
+        updateSessionMessages(sessionId, (prev) => [...prev, agentMsg]);
       }
-
-      const agentMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "agent",
-        content: reply,
-      };
-      updateSessionMessages(sessionId, (prev) => [...prev, agentMsg]);
     } catch (err) {
       console.error("Request failed:", err);
       const errorMsg: Message = {
@@ -238,16 +248,16 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-background transition-transform duration-200 lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 rounded-r-2xl border-r border-border bg-card transition-transform duration-200 lg:relative lg:rounded-none lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between border-b border-border px-4 py-[13px]">
             <span className="text-sm font-semibold text-foreground">Chats</span>
             <button
               onClick={handleNewChat}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary"
+              className="flex h-8 w-8 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -259,7 +269,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
             {[...currentSessions].reverse().map((session) => (
               <div
                 key={session.id}
-                className={`group flex items-center justify-between rounded-lg px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-accent ${
+                className={`group flex items-center justify-between rounded-xl px-3 py-2 text-sm cursor-pointer transition-colors hover:bg-accent ${
                   activeSessionId === session.id ? "bg-accent text-foreground" : "text-muted-foreground"
                 }`}
                 onClick={() => {
@@ -290,17 +300,17 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
 
       {/* Main chat area */}
       <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
+        <header className="flex items-center justify-between border-b border-border px-4 py-[13px]">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
             >
               <MessageSquare className="h-4 w-4" />
             </button>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary lg:flex"
+              className="hidden h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary lg:flex"
             >
               <MessageSquare className="h-4 w-4" />
             </button>
@@ -314,7 +324,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setTestMode(!testMode)}
-              className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-xs font-medium transition-colors ${
+              className={`flex h-9 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-colors ${
                 testMode
                   ? "border-destructive bg-destructive/10 text-destructive"
                   : "border-border text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -325,7 +335,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
             </button>
             <button
               onClick={() => setDark(!dark)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-secondary"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
             >
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
