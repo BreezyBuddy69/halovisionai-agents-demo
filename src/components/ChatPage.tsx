@@ -35,7 +35,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   const [thinkingText, setThinkingText] = useState("Thinking");
   const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [dark, setDark] = useState(() => {
     if (typeof window !== "undefined") {
@@ -248,8 +248,8 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 rounded-r-2xl border-r border-border bg-card transition-transform duration-200 lg:relative lg:rounded-none lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        className={`shrink-0 border-r border-border bg-card transition-all duration-200 overflow-hidden ${
+          sidebarOpen ? "w-64" : "w-0 border-r-0"
         }`}
       >
         <div className="flex h-full flex-col">
@@ -293,10 +293,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
         </div>
       </div>
 
-      {/* Sidebar overlay for mobile */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-30 bg-background/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+      {/* Main chat area */}
 
       {/* Main chat area */}
       <div className="flex flex-1 flex-col">
@@ -304,13 +301,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary lg:hidden"
-            >
-              <MessageSquare className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="hidden h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary lg:flex"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-border text-foreground transition-colors hover:bg-secondary"
             >
               <MessageSquare className="h-4 w-4" />
             </button>
@@ -366,7 +357,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
             <div className="animate-fade-in py-4">
               <div className="mx-auto max-w-2xl px-4">
                 <div className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border bg-secondary">
                     <Sparkles className="h-4 w-4 text-foreground" />
                   </div>
                   <div>

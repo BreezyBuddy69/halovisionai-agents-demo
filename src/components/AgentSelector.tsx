@@ -41,7 +41,7 @@ const AgentSelector = ({ selected, onSelect, agents, onUnlockRequest }: AgentSel
             <button
               key={agent.id}
               onClick={() => { onSelect(agent); setOpen(false); }}
-              className={`flex w-full flex-col rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent ${
+              className={`flex w-full flex-col rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-accent ${
                 selected.id === agent.id ? "bg-accent" : ""
               }`}
             >
@@ -56,7 +56,7 @@ const AgentSelector = ({ selected, onSelect, agents, onUnlockRequest }: AgentSel
               {lockedAgents.map((agent) => (
                 <div
                   key={agent.id}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 opacity-40"
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 opacity-40"
                 >
                   <Lock className="h-3 w-3 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">{agent.name}</span>
@@ -65,7 +65,7 @@ const AgentSelector = ({ selected, onSelect, agents, onUnlockRequest }: AgentSel
               <div className="my-1 border-t border-border" />
               <button
                 onClick={() => { onUnlockRequest(); setOpen(false); }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+                className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Unlock more agents</span>

@@ -19,7 +19,7 @@ const ChatMessage = ({ message, agentName }: ChatMessageProps) => {
       <div className="mx-auto max-w-2xl px-4">
         <div className="flex gap-4">
           <div
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
               isUser ? "bg-chat-user" : "bg-secondary"
             }`}
           >
