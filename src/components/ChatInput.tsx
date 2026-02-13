@@ -61,7 +61,7 @@ const ChatInput = ({ onSend, disabled, placeholder, queuedMessage }: ChatInputPr
         <button
           onClick={handleSubmit}
           disabled={!value.trim()}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-30"
         >
           <Send className="h-4 w-4" />
         </button>
