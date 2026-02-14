@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Sun, Moon, Sparkles, Plus, PanelLeftClose, PanelLeft, FlaskConical, Trash2, MessageCircle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { agents, type Agent } from "@/lib/agents";
 import { supabase } from "@/integrations/supabase/client";
 import AgentSelector from "@/components/AgentSelector";
@@ -21,6 +22,7 @@ interface ChatPageProps {
 }
 
 const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
+  const isMobile = useIsMobile();
   const availableAgents = useMemo(
     () => (allowedAgents === "all" ? agents : agents.filter((a) => allowedAgents.includes(a.id))),
     [allowedAgents]
@@ -33,7 +35,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   const [thinkingText, setThinkingText] = useState("Thinking");
   const [queuedMessage, setQueuedMessage] = useState<string | null>(null);
   const [testMode, setTestMode] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [dark, setDark] = useState(() => {
     if (typeof window !== "undefined") {
@@ -235,24 +237,48 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-[100dvh] bg-background relative">
+      {/* Mobile overlay backdrop */}
+      {isMobile && sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm animate-fade-in"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <div
-        className={`shrink-0 border-r border-border bg-card transition-all duration-300 ease-in-out overflow-hidden ${
-          sidebarOpen ? "w-72" : "w-0 border-r-0"
+        className={`${
+          isMobile
+            ? `fixed inset-y-0 left-0 z-50 w-72 bg-card transition-transform duration-300 ease-in-out ${
+                sidebarOpen ? "translate-x-0" : "-translate-x-full"
+              }`
+            : `shrink-0 border-r border-border bg-card transition-all duration-300 ease-in-out overflow-hidden ${
+                sidebarOpen ? "w-72" : "w-0 border-r-0"
+              }`
         }`}
       >
         <div className="flex h-full w-72 flex-col">
           {/* Sidebar header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3.5">
             <span className="text-sm font-semibold text-foreground tracking-tight">Chats</span>
-            <button
-              onClick={handleNewChat}
-              className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              title="New chat"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleNewChat}
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                title="New chat"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <PanelLeftClose className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Session list */}
@@ -273,6 +299,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
                 }`}
                 onClick={() => {
                   setActiveSessionIds((prev) => ({ ...prev, [selectedAgent.id]: session.id }));
+                  if (isMobile) setSidebarOpen(false);
                 }}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -294,11 +321,11 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
       {/* Main chat area */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div className="flex items-center gap-2">
+        <header className="flex items-center justify-between border-b border-border px-3 sm:px-4 py-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
               {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeft className="h-4 w-4" />}
@@ -310,17 +337,17 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
               onUnlockRequest={() => setUnlockDialogOpen(true)}
             />
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             <button
               onClick={() => setTestMode(!testMode)}
-              className={`flex h-9 items-center gap-1.5 rounded-2xl border px-3.5 text-xs font-medium transition-all ${
+              className={`flex h-9 items-center gap-1.5 rounded-2xl border px-2.5 sm:px-3.5 text-xs font-medium transition-all ${
                 testMode
                   ? "border-destructive/50 bg-destructive/10 text-destructive"
                   : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
               <FlaskConical className="h-3.5 w-3.5" />
-              {testMode ? "TEST" : "Live"}
+              <span className="hidden sm:inline">{testMode ? "TEST" : "Live"}</span>
             </button>
             <button
               onClick={() => setDark(!dark)}

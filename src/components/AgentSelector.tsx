@@ -28,11 +28,11 @@ const AgentSelector = ({ selected, onSelect, agents, onUnlockRequest }: AgentSel
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-accent"
+        className="flex items-center gap-1.5 sm:gap-2 rounded-2xl border border-border bg-background px-3 sm:px-4 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-accent min-w-0 max-w-[180px] sm:max-w-none"
       >
-        <Bot className="h-4 w-4 text-muted-foreground" />
-        <span>{selected.name}</span>
-        <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <Bot className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="truncate">{selected.name}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
