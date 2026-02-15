@@ -47,12 +47,15 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
     return false;
   });
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const thinkingInterval = useRef<ReturnType<typeof setInterval>>();
 
   const currentSessions = agentSessions[selectedAgent.id] || [];
   const activeSessionId = activeSessionIds[selectedAgent.id];
   const activeSession = currentSessions.find((s) => s.id === activeSessionId);
   const messages = activeSession?.messages || [];
+
+  const hasMessages = messages.length > 0 || loading;
 
   const ensureSession = useCallback(() => {
     if (!activeSessionIds[selectedAgent.id]) {
@@ -237,7 +240,7 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
   };
 
   return (
-    <div className="flex h-[100dvh] bg-background relative">
+    <div className="flex h-[100dvh] overflow-hidden bg-background relative">
       {/* Mobile overlay backdrop */}
       {isMobile && sidebarOpen && (
         <div
@@ -319,9 +322,9 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
       </div>
 
       {/* Main chat area */}
-      <div className="flex flex-1 flex-col min-w-0">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border px-3 sm:px-4 py-3">
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Header - sticky */}
+        <header className="flex items-center justify-between border-b border-border px-3 sm:px-4 py-3 shrink-0 bg-background z-10">
           <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -358,10 +361,11 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
           </div>
         </header>
 
-        {/* Messages area */}
-        <div className="flex-1 overflow-y-auto">
-          {messages.length === 0 && !loading && (
-            <div className="flex h-full flex-col items-center justify-center gap-4 px-4 animate-fade-in">
+        {/* Content area - ChatGPT style: centered when empty, scrollable when messages */}
+        {!hasMessages ? (
+          /* Empty state: centered with input */
+          <div className="flex flex-1 flex-col items-center justify-center px-4 overflow-hidden">
+            <div className="flex flex-col items-center gap-4 mb-8 animate-fade-in">
               <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-secondary shadow-sm">
                 <Sparkles className="h-6 w-6 text-foreground" />
               </div>
@@ -371,41 +375,53 @@ const ChatPage = ({ allowedAgents, onUnlockMore }: ChatPageProps) => {
                   {selectedAgent.description} · {selectedAgent.domain}
                 </p>
               </div>
-              <p className="mt-1 max-w-md text-center text-sm text-muted-foreground">
-                Send a message to start a conversation.
-              </p>
             </div>
-          )}
+            <div className="w-full max-w-2xl">
+              <ChatInput
+                onSend={handleSend}
+                disabled={false}
+                placeholder={`Message ${selectedAgent.name}...`}
+                queuedMessage={queuedMessage}
+              />
+            </div>
+          </div>
+        ) : (
+          /* Messages state: scrollable messages + fixed input at bottom */
+          <>
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto">
+              {messages.map((msg) => (
+                <ChatMessage key={msg.id} message={msg} agentName={selectedAgent.name} />
+              ))}
 
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} message={msg} agentName={selectedAgent.name} />
-          ))}
-
-          {loading && (
-            <div className="animate-fade-in py-5">
-              <div className="mx-auto max-w-2xl px-4">
-                <div className="flex gap-4">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-secondary shadow-sm">
-                    <Sparkles className="h-4 w-4 text-foreground" />
-                  </div>
-                  <div className="pt-0.5">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{thinkingText}</p>
-                    <TypingIndicator />
+              {loading && (
+                <div className="animate-fade-in py-5">
+                  <div className="mx-auto max-w-2xl px-4">
+                    <div className="flex gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-secondary shadow-sm">
+                        <Sparkles className="h-4 w-4 text-foreground" />
+                      </div>
+                      <div className="pt-0.5">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{thinkingText}</p>
+                        <TypingIndicator />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              <div ref={bottomRef} />
             </div>
-          )}
 
-          <div ref={bottomRef} />
-        </div>
-
-        <ChatInput
-          onSend={handleSend}
-          disabled={false}
-          placeholder={`Message ${selectedAgent.name}...`}
-          queuedMessage={queuedMessage}
-        />
+            <div className="shrink-0">
+              <ChatInput
+                onSend={handleSend}
+                disabled={false}
+                placeholder={`Message ${selectedAgent.name}...`}
+                queuedMessage={queuedMessage}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <UnlockAgentDialog
