@@ -21,8 +21,8 @@ serve(async (req) => {
     }
 
     const allowedPrefixes = [
-      "https://n8n.halo-vision.com/webhook/",
-      "https://n8n.halo-vision.com/webhook-test/",
+      "https://n8n.halovisionai.cloud/webhook/",
+      "https://n8n.halovisionai.cloud/webhook-test/",
     ];
     const isAllowed = allowedPrefixes.some((p) => webhookUrl.startsWith(p));
     if (!isAllowed) {
@@ -33,7 +33,6 @@ serve(async (req) => {
     }
 
     if (testMode) {
-      // Fire and forget — send but don't wait for response
       fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
